@@ -4,3 +4,6 @@ dist-newstyle/
 cabal.project.local
 
 bench.html
+
+*.eventlog
+*.eventlog.html

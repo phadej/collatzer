@@ -10,8 +10,8 @@ import Data.Foldable             (for_)
 import Data.Text                 (Text)
 import Network.HTTP.Types.Status (ok200)
 import Numeric.Natural           (Natural)
+import System.IO                 (hPutStrLn, stderr)
 import System.Timeout            (timeout)
-import System.IO (hPutStrLn, stderr)
 
 import qualified Data.Aeson               as A
 import qualified Data.Cache.LRU.IO        as LRU
@@ -73,7 +73,7 @@ data Opts = Opts
 optsP :: O.Parser Opts
 optsP = do
     optQuiteAfter <- optional $ O.option O.auto $
-        O.long "quite-after" <> O.metavar "SECS" <> O.help "Quit after given time"
+        O.long "quit-after" <> O.metavar "SECS" <> O.help "Quit after given time"
     optEventLogSock <- optional $ O.strOption $
         O.long "eventlog-socket" <> O.metavar "PATH" <> O.help "Eventlog socket"
     pure Opts {..}
@@ -82,6 +82,8 @@ main :: IO ()
 main = do
     opts <- O.execParser $ O.info (optsP <**> O.helper) $
         O.fullDesc <> O.header "collatzer - demo web app"
+
+    print opts
 
     for_ (optEventLogSock opts) $ \fp -> do
         trace $ "Eventlog socket " ++ fp
@@ -92,7 +94,7 @@ main = do
             Nothing -> id
             Just t  -> void . timeout (t * 1_000_000)
 
-    ctx <- LRU.newAtomicLRU (Just 10)
+    ctx <- LRU.newAtomicLRU (Just 10_000)
 
     trace "Starting app at http://localhost:8000"
     timeout' $ Warp.run 8000 (app ctx)
