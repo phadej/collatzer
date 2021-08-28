@@ -8,6 +8,7 @@ import Control.Applicative       (optional, (<**>))
 import Control.Monad             (void)
 import Data.Foldable             (for_)
 import Data.Text                 (Text)
+import Control.Concurrent.Async (withAsync, wait)
 import Network.HTTP.Types.Status (ok200)
 import Numeric.Natural           (Natural)
 import System.IO                 (hPutStrLn, stderr)
@@ -27,10 +28,13 @@ trace = hPutStrLn stderr
 type Ctx = LRU.AtomicLRU Natural [Natural]
 
 handler :: Ctx -> Text -> IO Wai.Response
-handler ctx t = case T.Read.decimal t of
-    Left _       -> step1 1000
-    Right (n, _) -> step1 n
+handler ctx t = withAsync step0 wait
   where
+    step0 :: IO Wai.Response
+    step0 = case T.Read.decimal t of
+        Left _       -> step1 1000
+        Right (n, _) -> step1 n
+
     step1 :: Natural -> IO Wai.Response
     step1 n = do
         x <- LRU.lookup n ctx
