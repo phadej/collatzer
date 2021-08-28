@@ -5,10 +5,11 @@
 module Collatzer.Main (main) where
 
 import Control.Applicative       (optional, (<**>))
-import Control.Monad             (void)
+import Control.Concurrent.Async  (wait, withAsync)
+import Control.Monad             (void, when)
 import Data.Foldable             (for_)
 import Data.Text                 (Text)
-import Control.Concurrent.Async (withAsync, wait)
+import Debug.Trace               (traceEventIO)
 import Network.HTTP.Types.Status (ok200)
 import Numeric.Natural           (Natural)
 import System.IO                 (hPutStrLn, stderr)
@@ -40,7 +41,10 @@ handler ctx t = withAsync step0 wait
         x <- LRU.lookup n ctx
         case x of
             Nothing -> step2 n
-            Just r  -> step3 r
+            Just r  -> do
+                -- to not spam too much
+                when (n `mod` 5000 == 0) $ traceEventIO $ "Cache hit " ++ show n
+                step3 r
 
     step2 :: Natural -> IO Wai.Response
     step2 n = do
