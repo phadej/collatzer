@@ -95,7 +95,7 @@ main = do
 
     for_ (optEventLogSock opts) $ \fp -> do
         trace $ "Eventlog socket " ++ fp
-        GHC.Eventlog.Socket.start (Just fp)
+        GHC.Eventlog.Socket.start fp
 
     let timeout' :: IO () -> IO ()
         timeout' = case optQuiteAfter opts of
